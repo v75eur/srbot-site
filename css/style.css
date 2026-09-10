@@ -214,51 +214,6 @@ footer{padding:60px 1.5rem 0;border-top:1px solid rgba(255,255,255,.04)}
 @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 
 /* ═══════════════════════════════════════════
-   BARRE PROMO CLIGNOTANTE EN HAUT
-   ═══════════════════════════════════════════ */
-.promo-bar{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    background:linear-gradient(90deg,#ff5f57,#ffbd2e,#00d4ff,#7b2ffc,#ff5f57);
-    background-size:300% 100%;
-    animation:gradientMove 4s ease infinite;
-    padding:8px 0;
-    z-index:10000;
-    text-align:center;
-    font-size:.8rem;
-    font-weight:600;
-    color:#fff;
-    box-shadow:0 2px 15px rgba(255,95,87,.3);
-}
-.promo-content{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:12px;
-    flex-wrap:wrap;
-    padding:0 1rem;
-}
-.promo-text strong{
-    color:#fff;
-    text-shadow:0 0 10px rgba(255,255,255,.5);
-    background:rgba(0,0,0,.2);
-    padding:2px 8px;
-    border-radius:4px;
-}
-.promo-blink{
-    animation:blinkFast 1s infinite;
-    font-size:1.1rem;
-}
-@keyframes gradientMove{
-    0%{background-position:0% 50%}
-    50%{background-position:100% 50%}
-    100%{background-position:0% 50%}
-}
-
-/* Ajuster la navbar et le hero à cause de la barre promo */
-.navbar{top:32px!important}
 .hero{padding-top:130px!important}
 
 /* ═══════════════════════════════════════════
@@ -515,4 +470,90 @@ body{top:0!important}
 @media(max-width:768px){
     .lang-box{width:100%;justify-content:center;margin-top:.5rem}
     .lang-label span{display:inline}
+}
+
+/* ═══════════════════════════════════════════
+   BARRE PROMO PROFESSIONNELLE
+   (pousse le contenu, ne cache rien)
+   ═══════════════════════════════════════════ */
+.promo-bar{
+    position:relative;
+    width:100%;
+    background:linear-gradient(90deg,#ff5f57,#ffbd2e,#00d4ff,#7b2ffc,#ff5f57);
+    background-size:300% 100%;
+    animation:gradientMove 6s ease infinite;
+    padding:10px 1rem;
+    text-align:center;
+    font-size:.82rem;
+    font-weight:600;
+    color:#fff;
+    z-index:999;
+    box-shadow:0 2px 10px rgba(0,0,0,.3);
+}
+.promo-content{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    flex-wrap:wrap;
+    max-width:1200px;
+    margin:0 auto;
+}
+.promo-text{
+    line-height:1.4;
+}
+.promo-text strong{
+    color:#fff;
+    text-shadow:0 0 8px rgba(255,255,255,.4);
+    background:rgba(0,0,0,.25);
+    padding:2px 8px;
+    border-radius:4px;
+    white-space:nowrap;
+}
+.promo-blink{
+    animation:blinkFast 1.2s infinite;
+    font-size:1.05rem;
+    flex-shrink:0;
+}
+
+/* NAVBAR - reste fixe MAIS sous la promo au chargement */
+.navbar{
+    top:0;
+    transition:top .3s;
+}
+.navbar.scrolled{
+    top:0;
+}
+
+/* Ajouter un espace pour compenser la navbar fixe */
+body{
+    padding-top:0;
+}
+
+/* Le hero doit avoir un padding-top suffisant */
+.hero{
+    padding-top:100px;
+}
+
+@keyframes gradientMove{
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+@keyframes blinkFast{
+    0%,100%{opacity:1;transform:scale(1)}
+    50%{opacity:.6;transform:scale(1.15)}
+}
+
+/* Responsive */
+@media(max-width:768px){
+    .promo-bar{font-size:.7rem;padding:8px .5rem}
+    .promo-text strong{padding:1px 5px}
+    .promo-blink{font-size:.9rem}
+    .hero{padding-top:90px}
+}
+@media(max-width:480px){
+    .promo-bar{font-size:.65rem;padding:6px .4rem}
+    .promo-content{gap:5px}
+    .promo-text strong{font-size:.65rem}
 }
