@@ -422,3 +422,97 @@ footer{padding:60px 1.5rem 0;border-top:1px solid rgba(255,255,255,.04)}
     .form-notice{padding:.8rem}
     .notice-line{font-size:.75rem}
 }
+
+/* ═══════════════════════════════════════════
+   SÉLECTEUR DE LANGUE VISIBLE
+   ═══════════════════════════════════════════ */
+.lang-box{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:rgba(0,212,255,.08);
+    border:1px solid rgba(0,212,255,.25);
+    border-radius:50px;
+    padding:4px 12px 4px 14px;
+    transition:all .3s;
+}
+.lang-box:hover{
+    background:rgba(0,212,255,.12);
+    border-color:rgba(0,212,255,.5);
+}
+.lang-label{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    font-size:.75rem;
+    font-weight:600;
+    color:#00d4ff;
+    white-space:nowrap;
+}
+.lang-label i{
+    font-size:.85rem;
+}
+
+/* Forcer l'affichage du widget Google Translate */
+#google_translate_element{
+    display:inline-block!important;
+    min-width:80px;
+}
+#google_translate_element .goog-te-gadget{
+    font-family:'Inter',sans-serif!important;
+    font-size:.75rem!important;
+    color:#fff!important;
+    line-height:1!important;
+}
+#google_translate_element .goog-te-gadget-simple{
+    background:transparent!important;
+    border:none!important;
+    padding:0!important;
+    font-size:.75rem!important;
+    display:flex!important;
+    align-items:center!important;
+}
+#google_translate_element .goog-te-gadget-simple .goog-te-menu-value{
+    color:#fff!important;
+    font-weight:600!important;
+    font-size:.75rem!important;
+    display:flex!important;
+    align-items:center!important;
+    gap:4px!important;
+}
+#google_translate_element .goog-te-gadget-simple .goog-te-menu-value span{
+    color:#fff!important;
+}
+#google_translate_element .goog-te-gadget-simple img{
+    display:none!important;
+}
+#google_translate_element .goog-te-gadget-icon{
+    display:none!important;
+}
+/* Flèche personnalisée */
+#google_translate_element .goog-te-gadget-simple .goog-te-menu-value:after{
+    content:'▼';
+    font-size:.6rem;
+    color:#00d4ff;
+    margin-left:4px;
+}
+
+/* Cacher la bannière Google */
+.goog-te-banner-frame{display:none!important}
+#goog-gt-tt{display:none!important}
+.goog-te-balloon-frame{display:none!important}
+body{top:0!important}
+.skiptranslate{display:none!important}
+.goog-text-highlight{background:none!important;box-shadow:none!important}
+
+/* Responsive */
+@media(max-width:1024px){
+    .lang-box{padding:3px 10px}
+    .lang-label{font-size:.7rem}
+    .lang-label span{display:none}
+    #google_translate_element .goog-te-gadget-simple .goog-te-menu-value{font-size:.7rem!important}
+}
+@media(max-width:768px){
+    .lang-box{width:100%;justify-content:center;margin-top:.5rem}
+    .lang-label span{display:inline}
+}
