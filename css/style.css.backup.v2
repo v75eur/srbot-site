@@ -335,6 +335,18 @@ footer{padding:60px 1.5rem 0;border-top:1px solid rgba(255,255,255,.04)}
    RESPONSIVE - Ajuster la barre promo
    ═══════════════════════════════════════════ */
 @media(max-width:768px){
+    .promo-bar{font-size:.65rem;padding:6px 0}
+    .promo-text{font-size:.65rem}
+    .promo-content{gap:6px}
+    .navbar{top:28px!important}
+    .hero{padding-top:110px!important}
+    .hero-badges{justify-content:center}
+    .free-advantages{grid-template-columns:1fr;padding:.8rem}
+    .free-ribbon{font-size:.55rem;padding:3px 30px;right:-35px}
+}
+@media(max-width:480px){
+    .promo-bar{font-size:.6rem}
+    .promo-text strong{display:inline;padding:1px 4px}
     .hero-badges{flex-direction:column;align-items:center;gap:.5rem}
 }
 
@@ -464,11 +476,6 @@ body{top:0!important}
    BARRE PROMO PROFESSIONNELLE
    (pousse le contenu, ne cache rien)
    ═══════════════════════════════════════════ */
-
-/* ═══════════════════════════════════════════
-   BARRE PROMO PROFESSIONNELLE (v3.8)
-   Pousse le contenu, ne cache rien
-   ═══════════════════════════════════════════ */
 .promo-bar{
     position:relative;
     width:100%;
@@ -492,7 +499,9 @@ body{top:0!important}
     max-width:1200px;
     margin:0 auto;
 }
-.promo-text{line-height:1.4}
+.promo-text{
+    line-height:1.4;
+}
 .promo-text strong{
     color:#fff;
     text-shadow:0 0 8px rgba(255,255,255,.4);
@@ -505,6 +514,25 @@ body{top:0!important}
     animation:blinkFast 1.2s infinite;
     font-size:1.05rem;
     flex-shrink:0;
+}
+
+/* NAVBAR - reste fixe MAIS sous la promo au chargement */
+.navbar{
+    top:0;
+    transition:top .3s;
+}
+.navbar.scrolled{
+    top:0;
+}
+
+/* Ajouter un espace pour compenser la navbar fixe */
+body{
+    padding-top:0;
+}
+
+/* Le hero doit avoir un padding-top suffisant */
+.hero{
+    padding-top:100px;
 }
 
 @keyframes gradientMove{
@@ -522,6 +550,7 @@ body{top:0!important}
     .promo-bar{font-size:.7rem;padding:8px .5rem}
     .promo-text strong{padding:1px 5px}
     .promo-blink{font-size:.9rem}
+    .hero{padding-top:90px}
 }
 @media(max-width:480px){
     .promo-bar{font-size:.65rem;padding:6px .4rem}
