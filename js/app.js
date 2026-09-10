@@ -1,10 +1,21 @@
 // ============================================================
-// SR Bot - app.js - v3.2
-// Formulaire → WhatsApp structuré (gratuit, sans backend)
+// SR Bot - app.js - v3.6
+// Formulaire → WhatsApp + protections invisibles
 // ============================================================
 
 // --- CONFIG ---
-const WHATSAPP_NUMBER = '22960315458'; // Ton numéro Bénin (sans le +)
+const WHATSAPP_NUMBER = '22960315458';
+const CONTACT_EMAIL = 'bottrade7425@gmail.com';
+
+// --- PROTECTIONS ---
+const COOLDOWN_MS = 15 * 60 * 1000;        // 15 minutes par client
+const MIN_FILL_TIME_MS = 10 * 1000;        // 10 secondes minimum de remplissage
+const DELAY_MIN_MS = 2000;                 // Délai minimum avant WhatsApp
+const DELAY_MAX_MS = 8000;                 // Délai maximum avant WhatsApp
+const DUP_WINDOW_MS = 24 * 60 * 60 * 1000; // Fenêtre anti-doublon : 24h
+
+// --- ÉTAT GLOBAL ---
+var formStartTime = Date.now();
 
 // --- SCROLL PROGRESS ---
 window.addEventListener('scroll', function() {
@@ -115,8 +126,8 @@ var popup = document.getElementById('popup');
 var popupMessage = document.getElementById('popup-message');
 function showPopup(msg, type) {
     type = type || 'success';
-    var icons = { success: '✅', error: '❌', info: 'ℹ️' };
-    var titles = { success: 'Demande envoyée', error: 'Erreur', info: 'Information' };
+    var icons = { success: '✅', error: '❌', info: '⏳' };
+    var titles = { success: 'Demande envoyée', error: 'Erreur', info: 'Merci de patienter' };
     popupMessage.innerHTML =
         '<div class="popup-icon">' + icons[type] + '</div>' +
         '<h3>' + titles[type] + '</h3>' +
@@ -129,11 +140,83 @@ document.querySelector('.popup-close') && document.querySelector('.popup-close')
 popup && popup.addEventListener('click', function(e) { if (e.target === this) closePopup(); });
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closePopup(); });
 
+// --- MESSAGE D'INFORMATION EN HAUT DU FORMULAIRE ---
+(function addFormNotice() {
+    var form = document.getElementById('registerForm');
+    if (!form) return;
+    var notice = document.createElement('div');
+    notice.className = 'form-notice';
+    notice.innerHTML =
+        '<div class="notice-line"><span>✅</span> Une seule demande suffit — réponse sous 24h.</div>' +
+        '<div class="notice-line"><span>⏳</span> Renvoi possible après 15 minutes.</div>' +
+        '<div class="notice-line"><span>📱</span> Votre demande part directement sur notre WhatsApp.</div>' +
+        '<div class="notice-line"><span>🔒</span> Vos informations restent confidentielles.</div>';
+    form.insertBefore(notice, form.firstChild);
+})();
+
+// --- UTILITAIRES DE PROTECTION ---
+function getRecentDemands() {
+    try {
+        return JSON.parse(localStorage.getItem('srbot_demands') || '[]');
+    } catch (e) { return []; }
+}
+function saveDemand(demand) {
+    var list = getRecentDemands();
+    list.push(demand);
+    // Garde seulement les 24 dernières heures
+    var cutoff = Date.now() - DUP_WINDOW_MS;
+    list = list.filter(function(d) { return d.date > cutoff; });
+    try {
+        localStorage.setItem('srbot_demands', JSON.stringify(list));
+    } catch (e) { /* ignore */ }
+}
+function getLastSubmit() {
+    try {
+        return parseInt(localStorage.getItem('srbot_last_submit') || '0');
+    } catch (e) { return 0; }
+}
+function setLastSubmit() {
+    try {
+        localStorage.setItem('srbot_last_submit', Date.now().toString());
+    } catch (e) { /* ignore */ }
+}
+function getRecentCountLastHour() {
+    var list = getRecentDemands();
+    var cutoff = Date.now() - 60 * 60 * 1000;
+    return list.filter(function(d) { return d.date > cutoff; }).length;
+}
+
 // --- FORM SUBMIT → WHATSAPP ---
 document.getElementById('registerForm') && document.getElementById('registerForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
-    // Collecte
+    // ========== PROTECTION 1 : HONEYPOT ==========
+    var honeypot = document.getElementById('website');
+    if (honeypot && honeypot.value.trim() !== '') {
+        console.warn('🤖 Bot détecté (honeypot)');
+        return; // silencieux
+    }
+
+    // ========== PROTECTION 2 : TEMPS DE REMPLISSAGE ==========
+    if (Date.now() - formStartTime < MIN_FILL_TIME_MS) {
+        console.warn('🤖 Formulaire rempli trop vite — bot suspecté');
+        showPopup('Merci de prendre le temps de vérifier vos informations avant d\'envoyer.', 'info');
+        return;
+    }
+
+    // ========== PROTECTION 3 : COOLDOWN 15 MINUTES ==========
+    var lastSubmit = getLastSubmit();
+    var now = Date.now();
+    if (lastSubmit && (now - lastSubmit) < COOLDOWN_MS) {
+        var remaining = Math.ceil((COOLDOWN_MS - (now - lastSubmit)) / 1000);
+        var min = Math.floor(remaining / 60);
+        var sec = remaining % 60;
+        var timeStr = (min > 0 ? min + ' min ' : '') + sec + ' sec';
+        showPopup('Vous avez déjà envoyé une demande récemment.<br><br>Prochaine demande possible dans <strong>' + timeStr + '</strong>.', 'info');
+        return;
+    }
+
+    // --- COLLECTE ---
     var data = {
         prenom: document.getElementById('prenom').value.trim(),
         nom: document.getElementById('nom').value.trim(),
@@ -144,10 +227,11 @@ document.getElementById('registerForm') && document.getElementById('registerForm
         email: document.getElementById('email').value.trim(),
         version: document.getElementById('version').value,
         description: document.getElementById('description').value.trim(),
-        actifs: document.getElementById('actifs').value.trim()
+        actifs: document.getElementById('actifs').value.trim(),
+        consent: document.getElementById('consent').checked
     };
 
-    // Validation
+    // --- VALIDATION ---
     var required = ['prenom', 'nom', 'telephone', 'nationalite', 'pays', 'ville', 'email', 'version', 'description'];
     var hasError = false;
     required.forEach(function(k) {
@@ -160,79 +244,131 @@ document.getElementById('registerForm') && document.getElementById('registerForm
         document.getElementById('email').classList.add('error');
         showPopup('Adresse email invalide.', 'error'); return;
     }
+    if (!data.consent) {
+        showPopup('Veuillez accepter la transmission de vos informations via WhatsApp.', 'error');
+        return;
+    }
 
-    // Bouton en chargement
+    // ========== PROTECTION 4 : ANTI-DOUBLON 24H ==========
+    var recent = getRecentDemands();
+    var isDuplicate = recent.some(function(d) {
+        return d.email.toLowerCase() === data.email.toLowerCase() ||
+               d.telephone.replace(/\s/g,'') === data.telephone.replace(/\s/g,'');
+    });
+    if (isDuplicate) {
+        // Popup de confirmation
+        popupMessage.innerHTML =
+            '<div class="popup-icon">⚠️</div>' +
+            '<h3>Demande déjà envoyée</h3>' +
+            '<p>Vous avez déjà envoyé une demande avec cet email ou ce numéro dans les dernières 24h.<br><br>Voulez-vous vraiment en envoyer une nouvelle ?</p>' +
+            '<button class="popup-btn" id="confirmDup">Oui, envoyer quand même</button>' +
+            '<button class="popup-btn" style="background:rgba(255,255,255,.08);margin-left:8px" onclick="closePopup()">Non, annuler</button>';
+        popup.classList.add('show');
+        document.getElementById('confirmDup').addEventListener('click', function() {
+            closePopup();
+            proceedToSend(data);
+        });
+        return;
+    }
+
+    proceedToSend(data);
+});
+
+// --- ENVOI EFFECTIF ---
+function proceedToSend(data) {
     var btn = document.getElementById('submitBtn');
     var btnText = document.getElementById('btnText');
     var btnLoader = document.getElementById('btnLoader');
     btn.disabled = true;
     btnText.style.display = 'none';
+
+    // ========== PROTECTION 5 : DÉLAI ALÉATOIRE + DYNAMIQUE ==========
+    var recentCount = getRecentCountLastHour();
+    var dynamicExtra = recentCount * 1000; // +1 sec par demande récente (ce navigateur)
+    var baseDelay = DELAY_MIN_MS + Math.random() * (DELAY_MAX_MS - DELAY_MIN_MS);
+    var totalDelay = Math.min(baseDelay + dynamicExtra, 15000);
+
+    // Compte à rebours visible dans le loader
+    var remainingSec = Math.ceil(totalDelay / 1000);
     btnLoader.style.display = 'flex';
+    var countdownInterval = setInterval(function() {
+        remainingSec--;
+        if (remainingSec > 0) {
+            btnLoader.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation... (' + remainingSec + ' sec)';
+        }
+    }, 1000);
+    btnLoader.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation... (' + remainingSec + ' sec)';
 
-    // ============================================================
-    // CONSTRUCTION DU MESSAGE STRUCTURÉ
-    // ============================================================
-    var versions = {
-        site: 'Version Web (5$/mois)',
-        debug: 'Application Android (15$ + 5$/mois)',
-        perso: 'Bot sur mesure (150$)'
-    };
-    var versionLabel = versions[data.version] || data.version;
-
-    // Date et heure au format lisible (fuseau local du visiteur)
-    var now = new Date();
-    var dateStr = now.toLocaleDateString('fr-FR', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-    });
-    var heureStr = now.toLocaleTimeString('fr-FR', {
-        hour: '2-digit', minute: '2-digit'
-    });
-
-    // Numéro de référence unique (basé sur le timestamp)
-    var ref = 'SRB-' + now.getFullYear() +
-              String(now.getMonth() + 1).padStart(2, '0') +
-              String(now.getDate()).padStart(2, '0') + '-' +
-              String(now.getHours()).padStart(2, '0') +
-              String(now.getMinutes()).padStart(2, '0') +
-              String(now.getSeconds()).padStart(2, '0');
-
-    // Message WhatsApp bien structuré
-    var message =
-        '🤖 *NOUVELLE DEMANDE SR BOT*\n' +
-        '━━━━━━━━━━━━━━━━━━━━━━\n' +
-        '🆔 *Réf:* ' + ref + '\n' +
-        '📅 *Date:* ' + dateStr + '\n' +
-        '🕐 *Heure:* ' + heureStr + '\n' +
-        '━━━━━━━━━━━━━━━━━━━━━━\n' +
-        '👤 *CLIENT*\n' +
-        '   Prénom: ' + data.prenom + '\n' +
-        '   Nom: ' + data.nom + '\n' +
-        '   Nationalité: ' + data.nationalite + '\n' +
-        '   Pays: ' + data.pays + '\n' +
-        '   Ville: ' + data.ville + '\n' +
-        '━━━━━━━━━━━━━━━━━━━━━━\n' +
-        '📞 *CONTACT*\n' +
-        '   WhatsApp: ' + data.telephone + '\n' +
-        '   Email: ' + data.email + '\n' +
-        '━━━━━━━━━━━━━━━━━━━━━━\n' +
-        '📦 *COMMANDE*\n' +
-        '   Version: ' + versionLabel + '\n' +
-        '   Actifs: ' + (data.actifs || 'Non précisé') + '\n' +
-        '━━━━━━━━━━━━━━━━━━━━━━\n' +
-        '📝 *STRATÉGIE*\n' +
-        data.description + '\n' +
-        '━━━━━━━━━━━━━━━━━━━━━━\n' +
-        '✅ Demande envoyée depuis le site SR Bot';
-
-    var waLink = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message);
-
-    // Petite pause pour montrer le loader, puis redirection WhatsApp
     setTimeout(function() {
+        clearInterval(countdownInterval);
         btn.disabled = false;
         btnText.style.display = 'flex';
         btnLoader.style.display = 'none';
+        btnLoader.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Ouverture de WhatsApp...';
 
-        // Ouvre WhatsApp avec le message pré-rempli
+        // --- CONSTRUCTION DU MESSAGE ---
+        var versions = {
+            site: 'Version Web (5$/mois)',
+            debug: 'Application Android (15$ + 5$/mois)',
+            perso: 'Bot sur mesure (150$)'
+        };
+        var versionLabel = versions[data.version] || data.version;
+
+        var now = new Date();
+        var dateStr = now.toLocaleDateString('fr-FR', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+        var heureStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+        var ref = 'SRB-' + now.getFullYear() +
+                  String(now.getMonth() + 1).padStart(2, '0') +
+                  String(now.getDate()).padStart(2, '0') + '-' +
+                  String(now.getHours()).padStart(2, '0') +
+                  String(now.getMinutes()).padStart(2, '0') +
+                  String(now.getSeconds()).padStart(2, '0');
+
+        var randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+        var message =
+            '🤖 *NOUVELLE DEMANDE SR BOT*\n' +
+            '━━━━━━━━━━━━━━━━━━━━━━\n' +
+            '🆔 *Réf:* ' + ref + '\n' +
+            '🔢 *ID:* #' + randomId + '\n' +
+            '📅 *Date:* ' + dateStr + '\n' +
+            '🕐 *Heure:* ' + heureStr + '\n' +
+            '━━━━━━━━━━━━━━━━━━━━━━\n' +
+            '👤 *CLIENT*\n' +
+            '   Prénom: ' + data.prenom + '\n' +
+            '   Nom: ' + data.nom + '\n' +
+            '   Nationalité: ' + data.nationalite + '\n' +
+            '   Pays: ' + data.pays + '\n' +
+            '   Ville: ' + data.ville + '\n' +
+            '━━━━━━━━━━━━━━━━━━━━━━\n' +
+            '📞 *CONTACT*\n' +
+            '   WhatsApp: ' + data.telephone + '\n' +
+            '   Email: ' + data.email + '\n' +
+            '━━━━━━━━━━━━━━━━━━━━━━\n' +
+            '📦 *COMMANDE*\n' +
+            '   Version: ' + versionLabel + '\n' +
+            '   Actifs: ' + (data.actifs || 'Non précisé') + '\n' +
+            '━━━━━━━━━━━━━━━━━━━━━━\n' +
+            '📝 *STRATÉGIE*\n' +
+            data.description + '\n' +
+            '━━━━━━━━━━━━━━━━━━━━━━\n' +
+            '✅ Demande envoyée depuis le site SR Bot';
+
+        var waLink = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message);
+
+        // Enregistre la demande
+        setLastSubmit();
+        saveDemand({
+            email: data.email,
+            telephone: data.telephone,
+            date: Date.now(),
+            ref: ref
+        });
+
+        // Ouvre WhatsApp
         window.open(waLink, '_blank');
 
         // Message de confirmation
@@ -243,14 +379,17 @@ document.getElementById('registerForm') && document.getElementById('registerForm
         };
         showPopup(msgs[data.version] || 'Votre demande est prête. Cliquez sur Envoyer dans WhatsApp.', 'success');
 
-        // Réinitialise le formulaire
         document.getElementById('registerForm').reset();
-    }, 600);
-});
+        formStartTime = Date.now(); // reset pour la prochaine fois
+    }, totalDelay);
+}
 
 // Effacer erreur au focus
 document.querySelectorAll('input, select, textarea').forEach(function(el) {
     el.addEventListener('focus', function() { this.classList.remove('error'); });
 });
 
-console.log('%c SR Bot v3.2 chargé ✅ — WhatsApp: +' + WHATSAPP_NUMBER, 'color:#00d4ff;font-weight:bold;font-size:14px');
+// Reset du chrono au chargement de la page
+formStartTime = Date.now();
+
+console.log('%c SR Bot v3.6 chargé ✅ — Protections actives', 'color:#00d4ff;font-weight:bold;font-size:14px');

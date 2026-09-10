@@ -394,3 +394,31 @@ footer{padding:60px 1.5rem 0;border-top:1px solid rgba(255,255,255,.04)}
     .promo-text strong{display:inline;padding:1px 4px}
     .hero-badges{flex-direction:column;align-items:center;gap:.5rem}
 }
+
+/* MESSAGE D'INFORMATION EN HAUT DU FORMULAIRE */
+.form-notice{
+    background:rgba(0,212,255,.05);
+    border:1px solid rgba(0,212,255,.15);
+    border-radius:12px;
+    padding:1rem 1.2rem;
+    margin-bottom:1.5rem;
+    display:flex;
+    flex-direction:column;
+    gap:.4rem;
+}
+.notice-line{
+    display:flex;
+    align-items:center;
+    gap:.6rem;
+    font-size:.82rem;
+    color:rgba(255,255,255,.65);
+    line-height:1.4;
+}
+.notice-line span:first-child{
+    font-size:1rem;
+    flex-shrink:0;
+}
+@media(max-width:480px){
+    .form-notice{padding:.8rem}
+    .notice-line{font-size:.75rem}
+}
