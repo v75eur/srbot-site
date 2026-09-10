@@ -1,23 +1,17 @@
 // ============================================================
-// SR Bot - app.js - v3.6
-// Formulaire → WhatsApp + protections invisibles
+// SR Bot - app.js - v4.0
 // ============================================================
 
-// --- CONFIG ---
 const WHATSAPP_NUMBER = '22960315458';
-const CONTACT_EMAIL = 'bottrade7425@gmail.com';
+const COOLDOWN_MS = 15 * 60 * 1000;
+const MIN_FILL_TIME_MS = 10 * 1000;
+const DELAY_MIN_MS = 2000;
+const DELAY_MAX_MS = 8000;
+const DUP_WINDOW_MS = 24 * 60 * 60 * 1000;
 
-// --- PROTECTIONS ---
-const COOLDOWN_MS = 15 * 60 * 1000;        // 15 minutes par client
-const MIN_FILL_TIME_MS = 10 * 1000;        // 10 secondes minimum de remplissage
-const DELAY_MIN_MS = 2000;                 // Délai minimum avant WhatsApp
-const DELAY_MAX_MS = 8000;                 // Délai maximum avant WhatsApp
-const DUP_WINDOW_MS = 24 * 60 * 60 * 1000; // Fenêtre anti-doublon : 24h
-
-// --- ÉTAT GLOBAL ---
 var formStartTime = Date.now();
 
-// --- SCROLL PROGRESS ---
+// SCROLL PROGRESS
 window.addEventListener('scroll', function() {
     const scrolled = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
     document.getElementById('scrollProgress').style.width = scrolled + '%';
@@ -25,35 +19,31 @@ window.addEventListener('scroll', function() {
     updateActiveNav();
 });
 
-// --- REVEAL ON SCROLL ---
+// REVEAL
 const revealObserver = new IntersectionObserver(function(entries) {
-    entries.forEach(function(e) {
-        if (e.isIntersecting) { e.target.classList.add('visible'); }
-    });
+    entries.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('visible'); });
 }, { threshold: 0.12, rootMargin: '0px 0px -30px 0px' });
 document.querySelectorAll('.reveal').forEach(function(el) { revealObserver.observe(el); });
 
-// --- ACTIVE NAV LINK ---
+// ACTIVE NAV
 function updateActiveNav() {
-    const sections = ['accueil', 'strategie', 'offres', 'exemples', 'commander'];
+    const sections = ['accueil', 'strategie', 'offres', 'formation', 'exemples', 'avis', 'commander'];
     let current = 'accueil';
     sections.forEach(function(id) {
         const el = document.getElementById(id);
-        if (el && window.scrollY >= el.offsetTop - 100) { current = id; }
+        if (el && window.scrollY >= el.offsetTop - 100) current = id;
     });
     document.querySelectorAll('.nav-item').forEach(function(a) {
         a.classList.toggle('active', a.getAttribute('href') === '#' + current);
     });
 }
 
-// --- MOBILE MENU ---
+// MOBILE MENU
 const menuToggle = document.getElementById('menuToggle');
 const navLinks = document.getElementById('navLinks');
 menuToggle && menuToggle.addEventListener('click', function() {
     navLinks.classList.toggle('open');
-    menuToggle.innerHTML = navLinks.classList.contains('open')
-        ? '<i class="fas fa-times"></i>'
-        : '<i class="fas fa-bars"></i>';
+    menuToggle.innerHTML = navLinks.classList.contains('open') ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
 });
 document.addEventListener('click', function(e) {
     if (navLinks && !navLinks.contains(e.target) && !menuToggle.contains(e.target)) {
@@ -62,7 +52,7 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// --- SMOOTH SCROLL ---
+// SMOOTH SCROLL
 document.querySelectorAll('a[href^="#"]').forEach(function(a) {
     a.addEventListener('click', function(e) {
         var t = document.querySelector(this.getAttribute('href'));
@@ -75,7 +65,7 @@ document.querySelectorAll('a[href^="#"]').forEach(function(a) {
     });
 });
 
-// --- STAT COUNTER ---
+// STAT COUNTER
 const statObserver = new IntersectionObserver(function(entries) {
     entries.forEach(function(entry) {
         if (!entry.isIntersecting) return;
@@ -92,11 +82,9 @@ const statObserver = new IntersectionObserver(function(entries) {
         statObserver.unobserve(el);
     });
 }, { threshold: 0.5 });
-document.querySelectorAll('.stat-number[data-target]').forEach(function(el) {
-    statObserver.observe(el);
-});
+document.querySelectorAll('.stat-number[data-target]').forEach(function(el) { statObserver.observe(el); });
 
-// --- LIGHTBOX ---
+// LIGHTBOX
 var lightbox = null;
 document.querySelectorAll('.screenshot-item').forEach(function(item) {
     item.addEventListener('click', function() {
@@ -105,7 +93,7 @@ document.querySelectorAll('.screenshot-item').forEach(function(item) {
         if (!lightbox) {
             lightbox = document.createElement('div');
             lightbox.className = 'lightbox';
-            lightbox.innerHTML = '<button class="lightbox-close" aria-label="Fermer">&times;</button><img alt="Screenshot SR Bot">';
+            lightbox.innerHTML = '<button class="lightbox-close" aria-label="Fermer">&times;</button><img alt="Screenshot">';
             document.body.appendChild(lightbox);
             lightbox.querySelector('.lightbox-close').addEventListener('click', closeLightbox);
             lightbox.addEventListener('click', function(e) { if (e.target === lightbox) closeLightbox(); });
@@ -116,95 +104,72 @@ document.querySelectorAll('.screenshot-item').forEach(function(item) {
         document.body.style.overflow = 'hidden';
     });
 });
-function closeLightbox() {
-    lightbox && lightbox.classList.remove('show');
-    document.body.style.overflow = '';
-}
+function closeLightbox() { lightbox && lightbox.classList.remove('show'); document.body.style.overflow = ''; }
 
-// --- POPUP ---
+// POPUP
 var popup = document.getElementById('popup');
 var popupMessage = document.getElementById('popup-message');
 function showPopup(msg, type) {
     type = type || 'success';
     var icons = { success: '✅', error: '❌', info: '⏳' };
     var titles = { success: 'Demande envoyée', error: 'Erreur', info: 'Merci de patienter' };
-    popupMessage.innerHTML =
-        '<div class="popup-icon">' + icons[type] + '</div>' +
-        '<h3>' + titles[type] + '</h3>' +
-        '<p>' + msg + '</p>' +
-        '<button class="popup-btn" onclick="closePopup()">Fermer</button>';
+    popupMessage.innerHTML = '<div class="popup-icon">' + icons[type] + '</div><h3>' + titles[type] + '</h3><p>' + msg + '</p><button class="popup-btn" onclick="closePopup()">Fermer</button>';
     popup.classList.add('show');
 }
 function closePopup() { popup && popup.classList.remove('show'); }
 document.querySelector('.popup-close') && document.querySelector('.popup-close').addEventListener('click', closePopup);
 popup && popup.addEventListener('click', function(e) { if (e.target === this) closePopup(); });
-document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closePopup(); });
 
-// --- MESSAGE D'INFORMATION EN HAUT DU FORMULAIRE ---
-(function addFormNotice() {
-    var form = document.getElementById('registerForm');
-    if (!form) return;
-    var notice = document.createElement('div');
-    notice.className = 'form-notice';
-    notice.innerHTML =
-        '<div class="notice-line"><span>✅</span> Une seule demande suffit — réponse sous 24h.</div>' +
-        '<div class="notice-line"><span>⏳</span> Renvoi possible après 15 minutes.</div>' +
-        '<div class="notice-line"><span>📱</span> Votre demande part directement sur notre WhatsApp.</div>' +
-        '<div class="notice-line"><span>🔒</span> Vos informations restent confidentielles.</div>';
-    form.insertBefore(notice, form.firstChild);
-})();
+// ========== FORMULAIRE INTELLIGENT ==========
+var versionSelect = document.getElementById('version');
+var strategyGroup = document.getElementById('strategyGroup');
+var descriptionField = document.getElementById('description');
 
-// --- UTILITAIRES DE PROTECTION ---
+versionSelect && versionSelect.addEventListener('change', function() {
+    if (this.value === 'perso') {
+        strategyGroup.style.display = 'flex';
+        descriptionField.required = true;
+    } else {
+        strategyGroup.style.display = 'none';
+        descriptionField.required = false;
+        descriptionField.classList.remove('error');
+    }
+});
+
+// UTILITAIRES
 function getRecentDemands() {
-    try {
-        return JSON.parse(localStorage.getItem('srbot_demands') || '[]');
-    } catch (e) { return []; }
+    try { return JSON.parse(localStorage.getItem('srbot_demands') || '[]'); } catch (e) { return []; }
 }
 function saveDemand(demand) {
     var list = getRecentDemands();
     list.push(demand);
-    // Garde seulement les 24 dernières heures
     var cutoff = Date.now() - DUP_WINDOW_MS;
     list = list.filter(function(d) { return d.date > cutoff; });
-    try {
-        localStorage.setItem('srbot_demands', JSON.stringify(list));
-    } catch (e) { /* ignore */ }
+    try { localStorage.setItem('srbot_demands', JSON.stringify(list)); } catch (e) {}
 }
-function getLastSubmit() {
-    try {
-        return parseInt(localStorage.getItem('srbot_last_submit') || '0');
-    } catch (e) { return 0; }
-}
-function setLastSubmit() {
-    try {
-        localStorage.setItem('srbot_last_submit', Date.now().toString());
-    } catch (e) { /* ignore */ }
-}
+function getLastSubmit() { try { return parseInt(localStorage.getItem('srbot_last_submit') || '0'); } catch (e) { return 0; } }
+function setLastSubmit() { try { localStorage.setItem('srbot_last_submit', Date.now().toString()); } catch (e) {} }
 function getRecentCountLastHour() {
     var list = getRecentDemands();
     var cutoff = Date.now() - 60 * 60 * 1000;
     return list.filter(function(d) { return d.date > cutoff; }).length;
 }
 
-// --- FORM SUBMIT → WHATSAPP ---
+// SUBMIT
 document.getElementById('registerForm') && document.getElementById('registerForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
-    // ========== PROTECTION 1 : HONEYPOT ==========
+    // Honeypot
     var honeypot = document.getElementById('website');
-    if (honeypot && honeypot.value.trim() !== '') {
-        console.warn('🤖 Bot détecté (honeypot)');
-        return; // silencieux
-    }
+    if (honeypot && honeypot.value.trim() !== '') { console.warn('Bot'); return; }
 
-    // ========== PROTECTION 2 : TEMPS DE REMPLISSAGE ==========
+    // Temps de remplissage
     if (Date.now() - formStartTime < MIN_FILL_TIME_MS) {
-        console.warn('🤖 Formulaire rempli trop vite — bot suspecté');
-        showPopup('Merci de prendre le temps de vérifier vos informations avant d\'envoyer.', 'info');
+        showPopup('Merci de prendre le temps de vérifier vos informations.', 'info');
         return;
     }
 
-    // ========== PROTECTION 3 : COOLDOWN 15 MINUTES ==========
+    // Cooldown
     var lastSubmit = getLastSubmit();
     var now = Date.now();
     if (lastSubmit && (now - lastSubmit) < COOLDOWN_MS) {
@@ -212,11 +177,11 @@ document.getElementById('registerForm') && document.getElementById('registerForm
         var min = Math.floor(remaining / 60);
         var sec = remaining % 60;
         var timeStr = (min > 0 ? min + ' min ' : '') + sec + ' sec';
-        showPopup('Vous avez déjà envoyé une demande récemment.<br><br>Prochaine demande possible dans <strong>' + timeStr + '</strong>.', 'info');
+        showPopup('Vous avez déjà envoyé une demande récemment.<br><br>Prochaine demande dans <strong>' + timeStr + '</strong>.', 'info');
         return;
     }
 
-    // --- COLLECTE ---
+    // Collecte
     var data = {
         prenom: document.getElementById('prenom').value.trim(),
         nom: document.getElementById('nom').value.trim(),
@@ -231,50 +196,41 @@ document.getElementById('registerForm') && document.getElementById('registerForm
         consent: document.getElementById('consent').checked
     };
 
-    // --- VALIDATION ---
-    var required = ['prenom', 'nom', 'telephone', 'nationalite', 'pays', 'ville', 'email', 'version', 'description'];
+    // Validation
+    var required = ['prenom', 'nom', 'telephone', 'nationalite', 'pays', 'ville', 'email', 'version'];
+    if (data.version === 'perso') required.push('description');
     var hasError = false;
     required.forEach(function(k) {
         var el = document.getElementById(k);
         el.classList.toggle('error', !data[k]);
         if (!data[k]) hasError = true;
     });
-    if (hasError) { showPopup('Veuillez remplir tous les champs obligatoires (*).', 'error'); return; }
+    if (hasError) { showPopup('Veuillez remplir tous les champs obligatoires.', 'error'); return; }
     if (!data.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
         document.getElementById('email').classList.add('error');
         showPopup('Adresse email invalide.', 'error'); return;
     }
     if (!data.consent) {
-        showPopup('Veuillez accepter la transmission de vos informations via WhatsApp.', 'error');
+        showPopup('Veuillez accepter la transmission de vos informations.', 'error');
         return;
     }
 
-    // ========== PROTECTION 4 : ANTI-DOUBLON 24H ==========
+    // Anti-doublon
     var recent = getRecentDemands();
     var isDuplicate = recent.some(function(d) {
-        return d.email.toLowerCase() === data.email.toLowerCase() ||
-               d.telephone.replace(/\s/g,'') === data.telephone.replace(/\s/g,'');
+        return d.email.toLowerCase() === data.email.toLowerCase() || d.telephone.replace(/\s/g,'') === data.telephone.replace(/\s/g,'');
     });
     if (isDuplicate) {
-        // Popup de confirmation
-        popupMessage.innerHTML =
-            '<div class="popup-icon">⚠️</div>' +
-            '<h3>Demande déjà envoyée</h3>' +
-            '<p>Vous avez déjà envoyé une demande avec cet email ou ce numéro dans les dernières 24h.<br><br>Voulez-vous vraiment en envoyer une nouvelle ?</p>' +
-            '<button class="popup-btn" id="confirmDup">Oui, envoyer quand même</button>' +
-            '<button class="popup-btn" style="background:rgba(255,255,255,.08);margin-left:8px" onclick="closePopup()">Non, annuler</button>';
+        popupMessage.innerHTML = '<div class="popup-icon">⚠️</div><h3>Demande déjà envoyée</h3><p>Vous avez déjà envoyé une demande avec cet email ou ce numéro dans les dernières 24h.<br><br>Voulez-vous vraiment en envoyer une nouvelle ?</p><button class="popup-btn" id="confirmDup">Oui, envoyer quand même</button><button class="popup-btn" style="background:rgba(255,255,255,.08);margin-left:8px" onclick="closePopup()">Non, annuler</button>';
         popup.classList.add('show');
-        document.getElementById('confirmDup').addEventListener('click', function() {
-            closePopup();
-            proceedToSend(data);
-        });
+        document.getElementById('confirmDup').addEventListener('click', function() { closePopup(); proceedToSend(data); });
         return;
     }
 
     proceedToSend(data);
 });
 
-// --- ENVOI EFFECTIF ---
+// ENVOI
 function proceedToSend(data) {
     var btn = document.getElementById('submitBtn');
     var btnText = document.getElementById('btnText');
@@ -282,51 +238,37 @@ function proceedToSend(data) {
     btn.disabled = true;
     btnText.style.display = 'none';
 
-    // ========== PROTECTION 5 : DÉLAI ALÉATOIRE + DYNAMIQUE ==========
     var recentCount = getRecentCountLastHour();
-    var dynamicExtra = recentCount * 1000; // +1 sec par demande récente (ce navigateur)
+    var dynamicExtra = recentCount * 1000;
     var baseDelay = DELAY_MIN_MS + Math.random() * (DELAY_MAX_MS - DELAY_MIN_MS);
     var totalDelay = Math.min(baseDelay + dynamicExtra, 15000);
 
-    // Compte à rebours visible dans le loader
     var remainingSec = Math.ceil(totalDelay / 1000);
     btnLoader.style.display = 'flex';
+    btnLoader.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparation... (' + remainingSec + ' sec)';
     var countdownInterval = setInterval(function() {
         remainingSec--;
-        if (remainingSec > 0) {
-            btnLoader.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation... (' + remainingSec + ' sec)';
-        }
+        if (remainingSec > 0) btnLoader.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparation... (' + remainingSec + ' sec)';
     }, 1000);
-    btnLoader.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation... (' + remainingSec + ' sec)';
 
     setTimeout(function() {
         clearInterval(countdownInterval);
         btn.disabled = false;
         btnText.style.display = 'flex';
         btnLoader.style.display = 'none';
-        btnLoader.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Ouverture de WhatsApp...';
 
-        // --- CONSTRUCTION DU MESSAGE ---
         var versions = {
             site: 'Version Web (5$/mois)',
             debug: 'Application Android (15$ + 5$/mois)',
-            perso: 'Bot sur mesure (150$)'
+            perso: 'Bot sur mesure (150$)',
+            formation: 'Formation Trading (100$ / 1 mois)'
         };
         var versionLabel = versions[data.version] || data.version;
 
         var now = new Date();
-        var dateStr = now.toLocaleDateString('fr-FR', {
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-        });
+        var dateStr = now.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         var heureStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-
-        var ref = 'SRB-' + now.getFullYear() +
-                  String(now.getMonth() + 1).padStart(2, '0') +
-                  String(now.getDate()).padStart(2, '0') + '-' +
-                  String(now.getHours()).padStart(2, '0') +
-                  String(now.getMinutes()).padStart(2, '0') +
-                  String(now.getSeconds()).padStart(2, '0');
-
+        var ref = 'SRB-' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '-' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
         var randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
 
         var message =
@@ -351,37 +293,39 @@ function proceedToSend(data) {
             '📦 *COMMANDE*\n' +
             '   Version: ' + versionLabel + '\n' +
             '   Actifs: ' + (data.actifs || 'Non précisé') + '\n' +
-            '━━━━━━━━━━━━━━━━━━━━━━\n' +
-            '📝 *STRATÉGIE*\n' +
-            data.description + '\n' +
+            (data.description ? '━━━━━━━━━━━━━━━━━━━━━━\n📝 *STRATÉGIE*\n' + data.description + '\n' : '') +
             '━━━━━━━━━━━━━━━━━━━━━━\n' +
             '✅ Demande envoyée depuis le site SR Bot';
 
         var waLink = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message);
 
-        // Enregistre la demande
         setLastSubmit();
-        saveDemand({
-            email: data.email,
-            telephone: data.telephone,
-            date: Date.now(),
-            ref: ref
-        });
+        saveDemand({ email: data.email, telephone: data.telephone, date: Date.now(), ref: ref });
 
-        // Ouvre WhatsApp
         window.open(waLink, '_blank');
 
-        // Message de confirmation
         var msgs = {
-            site: 'Votre demande <strong>Version Web</strong> est prête.<br>Cliquez sur <strong>Envoyer</strong> dans WhatsApp pour finaliser.<br><em>1 mois gratuit, ensuite 5$/mois.</em>',
-            debug: 'Votre demande <strong>Application Android</strong> est prête.<br>Cliquez sur <strong>Envoyer</strong> dans WhatsApp pour finaliser.<br><em>Prix: 15$ + 5$/mois.</em>',
-            perso: 'Votre demande <strong>Bot sur mesure</strong> est prête.<br>Cliquez sur <strong>Envoyer</strong> dans WhatsApp pour finaliser.<br><em>Prix: 150$ — 5 jours d\'essai gratuit.</em>'
+            site: 'Votre demande <strong>Version Web</strong> est prête.<br>Cliquez sur <strong>Envoyer</strong> dans WhatsApp.<br><em>1 mois gratuit.</em>',
+            debug: 'Votre demande <strong>Application Android</strong> est prête.<br>Cliquez sur <strong>Envoyer</strong> dans WhatsApp.',
+            perso: 'Votre demande <strong>Bot sur mesure</strong> est prête.<br>Cliquez sur <strong>Envoyer</strong> dans WhatsApp.<br><em>5 jours gratuits.</em>',
+            formation: 'Votre demande <strong>Formation Trading</strong> est prête.<br>Cliquez sur <strong>Envoyer</strong> dans WhatsApp.<br><em>On vous contacte avant tout paiement.</em>'
         };
         showPopup(msgs[data.version] || 'Votre demande est prête. Cliquez sur Envoyer dans WhatsApp.', 'success');
 
         document.getElementById('registerForm').reset();
-        formStartTime = Date.now(); // reset pour la prochaine fois
+        strategyGroup.style.display = 'none';
+        formStartTime = Date.now();
     }, totalDelay);
+}
+
+// ========== QUIZ DE CONFIANCE ==========
+function submitReview(type) {
+    var message = type === 'satisfied'
+        ? '😊 *AVIS CLIENT - SATISFAIT*\n\nJe suis satisfait de SR Bot !'
+        : '😞 *AVIS CLIENT - INSATISFAIT*\n\nJe ne suis pas satisfait de SR Bot.';
+    var waLink = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message);
+    window.open(waLink, '_blank');
+    showPopup(type === 'satisfied' ? 'Merci pour votre retour positif !' : 'Merci pour votre retour. Nous allons nous améliorer.', 'success');
 }
 
 // Effacer erreur au focus
@@ -389,7 +333,27 @@ document.querySelectorAll('input, select, textarea').forEach(function(el) {
     el.addEventListener('focus', function() { this.classList.remove('error'); });
 });
 
-// Reset du chrono au chargement de la page
-formStartTime = Date.now();
+// ========== POPUP D'ACCUEIL ==========
+(function welcomePopup() {
+    var lastSeen = localStorage.getItem('srbot_welcome_seen');
+    var now = Date.now();
+    var oneDay = 24 * 60 * 60 * 1000;
 
-console.log('%c SR Bot v3.6 chargé ✅ — Protections actives', 'color:#00d4ff;font-weight:bold;font-size:14px');
+    if (!lastSeen || (now - parseInt(lastSeen)) > oneDay) {
+        setTimeout(function() {
+            popupMessage.innerHTML =
+                '<div class="popup-icon">🎁</div>' +
+                '<h3>OFFRE SPÉCIALE !</h3>' +
+                '<p>🎁 <strong>1er mois GRATUIT</strong> sur la Version Web<br>' +
+                '⚡ <strong>5 jours GRATUITS</strong> sur le Bot sur mesure<br>' +
+                '🎓 <strong>Formation</strong> pour débutant — 100$<br><br>' +
+                '<em>Commencez GRATUITEMENT aujourd\'hui !</em></p>' +
+                '<button class="popup-btn" onclick="closePopup(); document.getElementById(\'commander\').scrollIntoView({behavior:\'smooth\'})">🎁 J\'en profite</button>' +
+                '<button class="popup-btn" style="background:rgba(255,255,255,.08);margin-top:.5rem" onclick="closePopup()">Plus tard</button>';
+            popup.classList.add('show');
+            localStorage.setItem('srbot_welcome_seen', now.toString());
+        }, 5000);
+    }
+})();
+
+console.log('%c SR Bot v4.0 chargé ✅', 'color:#00d4ff;font-weight:bold;font-size:14px');
