@@ -304,13 +304,21 @@ function proceedToSend(data) {
 
         window.open(waLink, '_blank');
 
-        var msgs = {
-            site: 'Votre demande <strong>Version Web</strong> est prête.<br>Cliquez sur <strong>Envoyer</strong> dans WhatsApp.<br><em>1 mois gratuit.</em>',
-            debug: 'Votre demande <strong>Application Android</strong> est prête.<br>Cliquez sur <strong>Envoyer</strong> dans WhatsApp.',
-            perso: 'Votre demande <strong>Bot sur mesure</strong> est prête.<br>Cliquez sur <strong>Envoyer</strong> dans WhatsApp.<br><em>5 jours gratuits.</em>',
-            formation: 'Votre demande <strong>Formation Trading</strong> est prête.<br>Cliquez sur <strong>Envoyer</strong> dans WhatsApp.<br><em>On vous contacte avant tout paiement.</em>'
-        };
-        showPopup(msgs[data.version] || 'Votre demande est prête. Cliquez sur Envoyer dans WhatsApp.', 'success');
+        var msgFinal = '✅ <strong>Merci pour votre confiance !</strong><br><br>' +
+            'Vos informations ont bien été transmises et restent <strong>strictement confidentielles</strong>.<br><br>' +
+            '🔒 Nous les utilisons <strong>uniquement</strong> pour :<br>' +
+            '• Vous contacter sur WhatsApp<br>' +
+            '• Créer votre profil personnel<br><br>' +
+            '📱 <strong>Prochaine étape :</strong><br>' +
+            'WhatsApp va s\'ouvrir avec vos informations déjà remplies.<br><br>' +
+            '👉 <strong>Cliquez sur le bouton d\'envoi dans WhatsApp</strong> pour valider.<br><br>' +
+            '📬 <strong>Vous recevrez ensuite :</strong><br>' +
+            '• Votre identifiant personnel<br>' +
+            '• Votre lien ntfy sécurisé<br>' +
+            '• Un guide simple et clair<br><br>' +
+            '⏱️ Réponse sous <strong>5 jours</strong>.<br><br>' +
+            '🙏 Merci de votre patience.';
+        showPopup(msgFinal, 'success');
 
         document.getElementById('registerForm').reset();
         strategyGroup.style.display = 'none';
