@@ -279,3 +279,26 @@ footer{padding:60px 1.5rem 0;border-top:1px solid rgba(255,255,255,.04)}
     .quiz-buttons{flex-direction:column}
     .quiz-btn{width:100%}
 }
+
+/* ═══════════════════════════════════════════
+   POPUP AMÉLIORÉ (confidentialité + étapes)
+   ═══════════════════════════════════════════ */
+.popup-content {
+    max-width: 520px;
+}
+.popup-content h3 {
+    font-size: 1.3rem;
+    margin-bottom: .5rem;
+    color: #00d4ff;
+}
+.popup-content p {
+    text-align: left;
+    line-height: 1.7;
+    font-size: .92rem;
+}
+.popup-content p strong {
+    color: #00d4ff;
+}
+.popup-content .popup-btn {
+    margin-top: 1.2rem;
+}

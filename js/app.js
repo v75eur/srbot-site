@@ -1,5 +1,5 @@
 // ============================================================
-// SR Bot - app.js - v4.0
+// SR Bot - app.js - v5.0
 // ============================================================
 
 const WHATSAPP_NUMBER = '22960315458';
@@ -304,13 +304,25 @@ function proceedToSend(data) {
 
         window.open(waLink, '_blank');
 
-        var msgs = {
-            site: 'Votre demande <strong>Version Web</strong> est prête.<br>Cliquez sur <strong>Envoyer</strong> dans WhatsApp.<br><em>1 mois gratuit.</em>',
-            debug: 'Votre demande <strong>Application Android</strong> est prête.<br>Cliquez sur <strong>Envoyer</strong> dans WhatsApp.',
-            perso: 'Votre demande <strong>Bot sur mesure</strong> est prête.<br>Cliquez sur <strong>Envoyer</strong> dans WhatsApp.<br><em>5 jours gratuits.</em>',
-            formation: 'Votre demande <strong>Formation Trading</strong> est prête.<br>Cliquez sur <strong>Envoyer</strong> dans WhatsApp.<br><em>On vous contacte avant tout paiement.</em>'
-        };
-        showPopup(msgs[data.version] || 'Votre demande est prête. Cliquez sur Envoyer dans WhatsApp.', 'success');
+        // ═══════════════════════════════════════════════
+        // NOUVEAU MESSAGE : poli, rassurant, clair
+        // ═══════════════════════════════════════════════
+        var msgFinal = '✅ <strong>Merci pour votre confiance !</strong><br><br>' +
+            'Vos informations ont bien été transmises et restent <strong>strictement confidentielles</strong>.<br><br>' +
+            '🔒 Nous les utilisons <strong>uniquement</strong> pour :<br>' +
+            '• Vous contacter sur WhatsApp<br>' +
+            '• Créer votre profil personnel<br><br>' +
+            '📱 <strong>Prochaine étape :</strong><br><br>' +
+            'WhatsApp va s\\'ouvrir avec vos informations déjà remplies.<br><br>' +
+            '👉 <strong>Cliquez sur le bouton d\\'envoi dans WhatsApp</strong> pour valider votre demande.<br><br>' +
+            '📬 <strong>Vous recevrez ensuite :</strong><br>' +
+            '• Votre identifiant personnel<br>' +
+            '• Votre lien ntfy sécurisé<br>' +
+            '• Un guide simple et clair pour recevoir vos alertes<br><br>' +
+            '⏱️ Réponse sous <strong>5 jours</strong>.<br><br>' +
+            '🙏 Merci de votre patience.';
+
+        showPopup(msgFinal, 'success');
 
         document.getElementById('registerForm').reset();
         strategyGroup.style.display = 'none';
@@ -347,8 +359,8 @@ document.querySelectorAll('input, select, textarea').forEach(function(el) {
                 '<p>🎁 <strong>1er mois GRATUIT</strong> sur la Version Web<br>' +
                 '⚡ <strong>5 jours GRATUITS</strong> sur le Bot sur mesure<br>' +
                 '🎓 <strong>Formation</strong> pour débutant — 100$<br><br>' +
-                '<em>Commencez GRATUITEMENT aujourd\'hui !</em></p>' +
-                '<button class="popup-btn" onclick="closePopup(); document.getElementById(\'commander\').scrollIntoView({behavior:\'smooth\'})">🎁 J\'en profite</button>' +
+                '<em>Commencez GRATUITEMENT aujourd\\'hui !</em></p>' +
+                '<button class="popup-btn" onclick="closePopup(); document.getElementById(\\'commander\\').scrollIntoView({behavior:\\'smooth\\'})">🎁 J\\'en profite</button>' +
                 '<button class="popup-btn" style="background:rgba(255,255,255,.08);margin-top:.5rem" onclick="closePopup()">Plus tard</button>';
             popup.classList.add('show');
             localStorage.setItem('srbot_welcome_seen', now.toString());
@@ -356,4 +368,4 @@ document.querySelectorAll('input, select, textarea').forEach(function(el) {
     }
 })();
 
-console.log('%c SR Bot v4.0 chargé ✅', 'color:#00d4ff;font-weight:bold;font-size:14px');
+console.log('%c SR Bot v5.0 chargé ✅', 'color:#00d4ff;font-weight:bold;font-size:14px');
